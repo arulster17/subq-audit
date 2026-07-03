@@ -1,0 +1,45 @@
+GPU: NVIDIA A100-SXM4-80GB (sm80, 79.2 GiB) | torch 2.5.1+cu124 cu12.4 | triton 3.1.0 | flash-attn 2.8.3.post1
+config: {'hidden_size': 2048, 'num_heads': 32, 'num_kv_heads': 2, 'head_dim': 64, 'block_size': 64, 'block_counts': 16, 'window_size': 512, 'rope_theta': 10000.0, 'dtype': 'bfloat16'}
+sweep: impls=['dense', 'nsa'] modes=['fwd'] seqlens=[1048576] batch=1 warmup=3 iters=10
+env recorded to results/bench.env.json; rows appended to results/bench.csv
+
+[dense |    fwd | T=1048576] running ...
+    median 25702.288 ms  (p25 25697.548 / p75 25703.711)  40797 tok/s  peak 17049 MiB
+[  nsa |    fwd | T=1048576] running ...
+    median 3598.958 ms  (p25 3597.987 / p75 3600.015)  291355 tok/s  peak 29986 MiB
+
+done.
+/usr/local/lib/python3.11/dist-packages/torch/autograd/graph.py:825: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at ../aten/src/ATen/cuda/CublasHandlePool.cpp:135.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+GPU: NVIDIA A100-SXM4-80GB (sm80, 79.2 GiB) | torch 2.5.1+cu124 cu12.4 | triton 3.1.0 | flash-attn 2.8.3.post1
+config: {'hidden_size': 2048, 'num_heads': 32, 'num_kv_heads': 2, 'head_dim': 64, 'block_size': 64, 'block_counts': 16, 'window_size': 512, 'rope_theta': 10000.0, 'dtype': 'bfloat16'}
+sweep: impls=['dense'] modes=['fwdbwd'] seqlens=[1048576] batch=1 warmup=3 iters=10
+env recorded to results/bench.env.json; rows appended to results/bench.csv
+
+[dense | fwdbwd | T=1048576] running ...
+    median 88622.891 ms  (p25 88618.481 / p75 88640.478)  11832 tok/s  peak 47017 MiB
+
+done.
+/usr/local/lib/python3.11/dist-packages/torch/autograd/graph.py:825: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at ../aten/src/ATen/cuda/CublasHandlePool.cpp:135.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+GPU: NVIDIA A100-SXM4-80GB (sm80, 79.2 GiB) | torch 2.5.1+cu124 cu12.4 | triton 3.1.0 | flash-attn 2.8.3.post1
+config: {'hidden_size': 2048, 'num_heads': 32, 'num_kv_heads': 2, 'head_dim': 64, 'block_size': 64, 'block_counts': 16, 'window_size': 512, 'rope_theta': 10000.0, 'dtype': 'bfloat16'}
+sweep: impls=['nsa'] modes=['fwdbwd'] seqlens=[524288] batch=1 warmup=3 iters=10
+env recorded to results/bench.env.json; rows appended to results/bench.csv
+
+[  nsa | fwdbwd | T= 524288] running ...
+    -> FATAL CUDA ERROR (context corrupted), logged
+
+CUDA context corrupted — stopping this run. Remaining cases need a fresh process.
+/usr/local/lib/python3.11/dist-packages/torch/autograd/graph.py:825: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at ../aten/src/ATen/cuda/CublasHandlePool.cpp:135.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+GPU: NVIDIA A100-SXM4-80GB (sm80, 79.2 GiB) | torch 2.5.1+cu124 cu12.4 | triton 3.1.0 | flash-attn 2.8.3.post1
+config: {'hidden_size': 2048, 'num_heads': 32, 'num_kv_heads': 2, 'head_dim': 64, 'block_size': 64, 'block_counts': 16, 'window_size': 512, 'rope_theta': 10000.0, 'dtype': 'bfloat16'}
+sweep: impls=['nsa'] modes=['fwdbwd'] seqlens=[1048576] batch=1 warmup=3 iters=10
+env recorded to results/bench.env.json; rows appended to results/bench.csv
+
+[  nsa | fwdbwd | T=1048576] running ...
+    -> FATAL CUDA ERROR (context corrupted), logged
+
+CUDA context corrupted — stopping this run. Remaining cases need a fresh process.
+ALL_EXT_RUNS_FINISHED

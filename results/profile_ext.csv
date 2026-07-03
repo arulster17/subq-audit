@@ -1,0 +1,13 @@
+impl,seqlen,bucket,self_cuda_ms,pct,iters
+nsa,524288,topk_selection,567.1521,57.64,5
+nsa,524288,compression_attn,246.9964,25.1,5
+nsa,524288,sliding_window,25.3002,2.57,5
+nsa,524288,selected_attn,87.3379,8.88,5
+nsa,524288,gemm_projections,37.5976,3.82,5
+nsa,524288,rope_gating_elemwise,19.5467,1.99,5
+nsa,1048576,topk_selection,2260.3585,62.81,5
+nsa,1048576,compression_attn,968.9613,26.93,5
+nsa,1048576,sliding_window,49.6078,1.38,5
+nsa,1048576,selected_attn,203.7592,5.66,5
+nsa,1048576,gemm_projections,77.0293,2.14,5
+nsa,1048576,rope_gating_elemwise,38.9371,1.08,5

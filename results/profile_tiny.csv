@@ -1,0 +1,10 @@
+impl,seqlen,bucket,self_cuda_ms,pct,iters
+nsa,2048,topk_selection,0.0256,6.55,5
+nsa,2048,compression_attn,0.0258,6.6,5
+nsa,2048,sliding_window,0.072,18.4,5
+nsa,2048,selected_attn,0.1332,34.03,5
+nsa,2048,gemm_projections,0.0875,22.37,5
+nsa,2048,rope_gating_elemwise,0.0472,12.05,5
+dense,2048,dense_flash_attn,0.0855,35.39,5
+dense,2048,gemm_projections,0.0792,32.79,5
+dense,2048,rope_gating_elemwise,0.0769,31.82,5

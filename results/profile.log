@@ -1,0 +1,100 @@
+[profile nsa T=8192] ...
+
+  top kernels [nsa T=8192] (total self-CUDA 2.78 ms/iter):
+     ms/iter  bucket                 kernel
+       1.021  selected_attn          parallel_nsa_fwd_kernel
+       0.548  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       0.399  sliding_window         void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       0.224  topk_selection         parallel_nsa_kernel_topk
+       0.175  compression_attn       parallel_nsa_compression_fwd_kernel
+       0.175  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::addcmul_cuda_kernel
+       0.107  gemm_projections       ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_64x3_tn
+       0.076  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       0.041  rope_gating_elemwise   rotary_embedding_kernel
+       0.008  compression_attn       mean_pooling_fwd_kernel
+       0.004  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{l
+       0.003  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, at::detail::Array<char*, 1> >(
+[profile dense T=8192] ...
+
+  top kernels [dense T=8192] (total self-CUDA 2.49 ms/iter):
+     ms/iter  bucket                 kernel
+       1.529  dense_flash_attn       void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       0.544  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       0.196  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       0.082  rope_gating_elemwise   void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueTy
+       0.072  gemm_projections       ampere_bf16_s16816gemm_bf16_128x128_ldg8_f2f_stages_64x3_tn
+       0.064  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<c10::BFloat16>, at::detail::Arra
+[profile nsa T=32768] ...
+
+  top kernels [nsa T=32768] (total self-CUDA 13.42 ms/iter):
+     ms/iter  bucket                 kernel
+       4.217  selected_attn          parallel_nsa_fwd_kernel
+       2.507  topk_selection         parallel_nsa_kernel_topk
+       2.452  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       1.556  sliding_window         void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       1.521  compression_attn       parallel_nsa_compression_fwd_kernel
+       0.656  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::addcmul_cuda_kernel
+       0.287  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       0.195  rope_gating_elemwise   rotary_embedding_kernel
+       0.015  compression_attn       mean_pooling_fwd_kernel
+       0.010  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{l
+       0.004  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, at::detail::Array<char*, 1> >(
+[profile dense T=32768] ...
+
+  top kernels [dense T=32768] (total self-CUDA 26.86 ms/iter):
+     ms/iter  bucket                 kernel
+      23.172  dense_flash_attn       void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       2.422  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       0.714  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       0.320  rope_gating_elemwise   void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueTy
+       0.236  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<c10::BFloat16>, at::detail::Arra
+[profile nsa T=131072] ...
+
+  top kernels [nsa T=131072] (total self-CUDA 95.03 ms/iter):
+     ms/iter  bucket                 kernel
+      36.706  topk_selection         parallel_nsa_kernel_topk
+      20.505  compression_attn       parallel_nsa_compression_fwd_kernel
+      17.470  selected_attn          parallel_nsa_fwd_kernel
+       9.279  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       6.189  sliding_window         void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       2.597  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::addcmul_cuda_kernel
+       1.138  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       1.054  rope_gating_elemwise   rotary_embedding_kernel
+       0.054  compression_attn       mean_pooling_fwd_kernel
+       0.032  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{l
+       0.009  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, at::detail::Array<char*, 1> >(
+[profile dense T=131072] ...
+
+  top kernels [dense T=131072] (total self-CUDA 388.40 ms/iter):
+     ms/iter  bucket                 kernel
+     373.641  dense_flash_attn       void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       9.615  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       2.826  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       1.362  rope_gating_elemwise   void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueTy
+       0.959  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<c10::BFloat16>, at::detail::Arra
+[profile nsa T=262144] ...
+
+  top kernels [nsa T=262144] (total self-CUDA 303.25 ms/iter):
+     ms/iter  bucket                 kernel
+     143.342  topk_selection         parallel_nsa_kernel_topk
+      81.385  compression_attn       parallel_nsa_compression_fwd_kernel
+      37.675  selected_attn          parallel_nsa_fwd_kernel
+      18.690  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+      12.377  sliding_window         void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+       5.203  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::addcmul_cuda_kernel
+       2.274  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       2.128  rope_gating_elemwise   rotary_embedding_kernel
+       0.097  compression_attn       mean_pooling_fwd_kernel
+       0.065  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::sigmoid_kernel_cuda(at::TensorIteratorBase&)::{l
+       0.017  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::FillFunctor<int>, at::detail::Array<char*, 1> >(
+[profile dense T=262144] ...
+
+  top kernels [dense T=262144] (total self-CUDA 1585.36 ms/iter):
+     ms/iter  bucket                 kernel
+    1555.417  dense_flash_attn       void flash::flash_fwd_kernel<Flash_fwd_kernel_traits<64, 128, 128, 4, false, false, cutlass::bfloat16_t, Flash
+      19.577  gemm_projections       ampere_bf16_s16816gemm_bf16_128x256_ldg8_f2f_stages_64x3_tn
+       5.632  rope_gating_elemwise   void at::native::elementwise_kernel<128, 4, at::native::gpu_kernel_impl_nocast<at::native::BinaryFunctor<c10::
+       2.818  rope_gating_elemwise   void at::native::(anonymous namespace)::CatArrayBatchedCopy_contig<at::native::(anonymous namespace)::OpaqueTy
+       1.913  rope_gating_elemwise   void at::native::vectorized_elementwise_kernel<4, at::native::CUDAFunctor_add<c10::BFloat16>, at::detail::Arra
+
+wrote 36 rows -> results/profile.csv
