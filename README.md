@@ -72,6 +72,43 @@ block 64, top-16 blocks, sliding window 512.
    an approximation by design; quality parity on trained models is the sparse
    papers' claim, not established by this benchmark.
 
+## Quality is out of scope — and currently untestable (read before citing "7× at no cost")
+
+The speed result quietly assumes quality parity. This repo cannot test that
+assumption, and as of 2026-07 neither can anyone outside DeepSeek:
+
+1. **No NSA-trained checkpoint exists publicly.** NSA's quality claim is about
+   *natively trained* sparse attention; the only NSA-trained LM ever built is
+   the paper's 27B (64Q/4KV), never released. Public NSA artifacts are kernel
+   implementations (fla-org — used here; FSA) or non-text adaptations
+   (VideoNSA, a Qwen2.5-VL video finetune). Nothing on Hugging Face as of
+   July 2026.
+2. **A same-weights drop-in comparison is layout-constrained** by the kernel's
+   GQA-group-multiple-of-16 assert. Survey of public long-context checkpoints:
+   exactly one fits — ChatGLM3-6B-128K (32Q/2KV = group 16, head_dim 128,
+   131,072 trained context; config-verified). GLM-4-9B-chat-1M fails (group
+   8); Falcon-40B / StarCoder / SantaCoder fit the layout but are 2K–8K-context
+   models, useless for long-context retrieval.
+3. **Even that one test would answer a different question**: training-free
+   drop-in sparsification of a dense-trained model — which the NSA paper
+   itself predicts degrades (native trainability is its stated motivation),
+   and which requires hand-setting NSA's gates (the dense checkpoint has no
+   gate weights). Parity would be a strong positive finding about drop-in
+   use; degradation would say nothing about NSA-as-trained. Neither outcome
+   measures the claim the speed number leans on.
+
+What is known from this repo: with real top-16 selection on random inputs,
+NSA's output diverges from dense (cos ≈ 0.976; `verify_correctness.py`
+check 4) — approximation by design, quantifying nothing about trained
+quality. Note also that single-needle retrieval — the natural first quality
+probe — is the easiest long-context task; passing it would be necessary, not
+sufficient, and multi-hop/aggregation retrieval is untested anywhere in the
+open NSA ecosystem.
+
+**Citing rule:** "NSA ~7× faster than dense at 1M tokens" (this repo) is a
+kernel wall-clock fact. "7× faster *at no quality cost*" is DeepSeek's claim,
+reproducible only with their unreleased checkpoint.
+
 ## Known kernel bug (found by this audit)
 
 NSA's backward pass hits a deterministic `illegal memory access` for
