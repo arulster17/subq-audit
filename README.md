@@ -111,6 +111,15 @@ quadratic memory.
    content-dependent block-sparse attention, not SubQ's exact mechanism.
    Results bound the plausibility of the claim; they don't reproduce it.
 
+## Companion analytical audit (no GPU)
+
+`analysis/dsa_flop_audit.py` audits SubQ §5.6's claim that DeepSeek V3.2's
+Lightning Indexer overtakes its sparse main attention at ~52K tokens (190× at
+12M). It reconstructs SubQ's Table 2 exactly, then re-derives the crossover
+with two accounting levers isolated: deployed MQA-absorbed MLA vs SubQ's
+non-absorbed accounting, and FP8-cost vs raw FLOP count. Findings in
+`analysis/AUDIT.md`; sources in `papers/`.
+
 ## Repo layout
 
 ```
