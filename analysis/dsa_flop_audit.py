@@ -209,8 +209,10 @@ HBM_BW = 3.35e12   # HBM3 bandwidth, B/s
 #   epilogue ops : ~64-191 (ReLU + weighted head-sum; CUDA cores; the weight
 #                  w can be folded into q pre-GEMM iff w >= 0, else ~191)
 #   bytes, tiled : Q 8192/Bn (the fat operand: 64x128 = 8 KB/query at fp8),
-#                  K 128/Bm, + score write and top-k re-read (~2 B each,
-#                  PRECISION-INVARIANT — scores stay bf16 for top-k ranking)
+#                  K 128/Bm, + score write and top-k re-read (~4 B each,
+#                  PRECISION-INVARIANT — the shipped kernel writes FP32
+#                  scores, kernel.py:214, and top-k runs on that FP32
+#                  tensor, model.py:483)
 # Arithmetic intensity is L-INDEPENDENT (FLOPs and bytes both O(L^2)), so the
 # compute-vs-memory regime is the same at 50K and at 12M; L only scales the
 # tile count. At Bm=Bn=128 the op is memory-bound in BOTH precisions
@@ -254,8 +256,10 @@ def section3a():
         k20, k15 = kappa_roofline(Bn, Bm, 2.0), kappa_roofline(Bn, Bm, 1.5)
         grid += [k20, k15]
         print(f"  {Bm:>6}x{Bn:<6} {ai:>7.0f} {regime:>13} {k20:>11.2f} {k15:>11.2f}")
-    print(f"  => defensible kappa_eff range ~{min(grid):.1f}-{max(grid):.1f};"
-          f" headline uses kappa = {KAPPA_REALISTIC}.")
+    print(f"  => defensible kappa_eff range {min(grid):.2f}-{max(grid):.2f}"
+          f" (grid min 1.56 rounds to 1.6; the kappa=1.5 matrix row is kept"
+          f"\n     as a floor slightly MORE conservative than the model"
+          f" supports); headline kappa = {KAPPA_REALISTIC}.")
     print("     kappa=2 is the datasheet-peak OPTIMISTIC bound; kappa=4 is not"
           "\n     defensible on Hopper and is kept only as a sensitivity row.")
     print("     Status: MODELED, UNCONFIRMED by vendor benchmarks. No local")
@@ -310,7 +314,9 @@ def cost_ratio(L, core, kappa):
 # ---------------------------------------------------------------------------
 L_12M  = 12288 * KI
 L_1M   = 1024 * KI
-L_128K = 128 * KI   # DeepSeek V3.2's actual maximum served context (dsv32.txt:88-89)
+L_128K = 128 * KI   # V3.2's 128K window: continued-trained from a
+                    # 128K-extended V3.1 base (dsv32.txt:88-89); serving cost
+                    # curves also stop at 128K (Figure 3, dsv32.txt:266-270)
 
 CASES = [
     # label,                                      core,         kappa

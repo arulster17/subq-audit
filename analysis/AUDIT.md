@@ -12,24 +12,61 @@ derivation is `analysis/dsa_flop_audit.py` (run it to regenerate every number
 here). Both sides agree the indexer is O(L²) — DeepSeek concedes it
 (dsv32.txt:216–217) — so the audit is entirely about the constant factor.
 
+## What this does and does not establish
+
+Read this before the verdict; every claim in this repo is scoped by it.
+
+- **The companion wall-clock benchmark (this repo's README; audit #4)
+  measures NSA, a proxy — not SubQ's SSA.** SubQ's mechanism is undisclosed
+  ("The mechanism by which SSA meets these requirements is outside the scope
+  of this report", subq.txt:376). The benchmark's conclusions are about the
+  closest open analog and about where the burden of proof sits — never about
+  SubQ's system, which it cannot observe.
+- **This document (audit #5) is a FLOP-frame reconstruction, not a
+  measurement.** Every crossover and ratio below is a value *computed under a
+  stated cost frame* — wall-clock ∝ precision-weighted FLOPs at uniform
+  hardware utilization — not an observed cost. The direction of the error
+  that utilization assumption introduces is unresolved (SPoF 4) and is
+  explicitly flagged for expert performance-engineering review; the model
+  that produced this audit twice defended a since-withdrawn version of the
+  utilization argument, and that admission is the honest flag standing in
+  for the review that has not yet happened.
+- **Neither half observes SubQ's actual running system.** It is closed: no
+  public checkpoint, kernel, or trace exists. Every statement about SubQ
+  here is a statement about its published numbers and text.
+- **No claim in this repo has been checked by a human domain expert or by
+  SubQ.** This is independent analysis at a stated evidence level — sourced
+  constants, quoted text, and a rerunnable derivation — nothing more.
+
 ## Verdict
 
-**Direction-robust finding (the load-bearing claim). Across the entire
-envelope of defensible accountings — every precision assumption, both
-attention accountings, the full κ range — SubQ §5.6's headline figures
-overstate the cost on DeepSeek's deployed hardware by ≥1.9× on the crossover
-and ≥1.7× on the 12M ratio. This direction does not depend on any single
-contested choice: even at the most SubQ-favorable corner of the envelope
-(count-frame, FP8-core-equivalent: 101K / 109×) the overstatement is 1.95× and
-1.74×.**
+**The load-bearing finding, stated with its conditions. Everything here is
+computed under one stated lens — wall-clock ∝ precision-weighted FLOPs at
+uniform hardware utilization, whose residual error direction is unknown
+(SPoF 4) — and no number below is asserted outside it. Under that frame,
+given the deployed MQA-absorbed attention accounting (lever a — DeepSeek's
+stated kernel-level implementation, defended on capacity and bandwidth
+grounds in Finding 3), SubQ §5.6's headline figures compute to an
+overstatement across the full remaining envelope — every precision
+assumption and the entire κ range — of at least 1.95× on the crossover
+(100,752 vs 51,600 at the count-frame floor; we state the margin rather
+than round it) and at least 1.74× on the 12M ratio (109.2× vs 190.4×). Both
+conditions are doing real work and are stated rather than hidden: a reader
+who accepts the FP8 cost frame but rejects lever (a) lands at the "(b)
+alone, κ=1.6" corner — crossover 63,888, 12M ratio 160.6× — a computed
+overstatement of only 1.24× / 1.19×. Lever (a) is the audit's
+best-evidenced correction, but it is a single lever, and the ≥1.9×
+robustness claim does not survive without it; and a reader who rejects the
+FLOP frame itself owes an argument against its stated assumptions, not
+against numbers this audit never asserted as latencies.**
 
 **The envelope. SubQ's arithmetic is internally exact and their assumed indexer
 matches the shipped config — but the headline numbers live in a raw-FLOP-count
 frame with the cheaper of two attention accountings, and §5.6's prose narrates
 them as "cost". Correcting to DeepSeek's deployed MQA-absorbed MLA core
-(lever a) and pricing FP8 where the shipped code actually runs it (lever b)
-moves the crossover from 52K into a 101K–156K band and the 12M ratio from 190×
-to 74–109×. Two knobs set the spread. First, κ_eff (the FP8/BF16 cost factor):
+(lever a) and pricing FP8 where the shipped code actually runs it (lever b),
+the crossover computes to a 101K–156K band and the 12M ratio to 74–109× —
+under this frame, always. Two knobs set the spread. First, κ_eff (the FP8/BF16 cost factor):
 roofline-modeled at ~1.5–1.8, structurally corroborated by the shipped kernel
 but unconfirmed by any vendor benchmark; the datasheet 2× is optimistic.
 Second, whether the sparse MLA core itself runs FP8 — resolved from DeepSeek's
@@ -37,16 +74,26 @@ reference inference code: the core's attention matmuls compute in BF16 in both
 paths, the FP8 KV cache is a storage format dequantized before compute, and
 only the indexer and the projections run FP8 matmuls (exact lines in SPoF 1).
 That disfavors the FP8-core corner (101K / 109×, retained only as a
-conservative floor) and centers the supported range on **135K–156K crossover,
-74–84× at 12M**. Illustrative midpoint (deployed core, κ=1.6): ~142K / ~80× —
-cited only inside the envelope, never on its own.**
+conservative floor) and centers the frame-supported range on **135K–156K
+crossover, 74–84× at 12M**. Illustrative midpoint (deployed core, κ=1.6):
+~142K / ~80× — cited only inside the envelope and its frame, never on its
+own.**
 
-**This is a FLOP-frame analysis assuming uniform hardware utilization, so every
-figure above is an upper bound on how favorable reality is to SubQ (see model
-risk below); real wall-clock would move further against their headline. The
-qualitative claim survives: the O(L²) indexer does eventually dominate,
-unboundedly. The specific numbers 52K and 190× do not survive translation into
-deployed hardware cost at any point in the envelope.**
+**This is a FLOP-frame analysis assuming uniform hardware utilization, and the
+direction of the error that assumption introduces is unknown (SPoF 4) — only
+wall-clock measurement on Hopper would resolve it. The shared thesis of this
+repo's two audits is symmetric: counting ops is not costing systems, and the
+error runs in both directions — against SubQ's 64×-fewer-FLOPs framing
+(audit #4: the closest open analog's FLOP savings shrink to 7× wall-clock
+once selection is paid) and against SubQ's own 190× FLOP-count indictment of
+DeepSeek's indexer (this audit: 74–109× once deployment accounting and
+precision are priced). Audit #4's empirical finding — quadratic selection
+eats sparse-attention gains — in fact *supports* §5.6's qualitative thesis
+even as this audit corrects its constants by ~2–2.5× within the FLOP frame.
+The qualitative claim survives: the O(L²) indexer does eventually dominate,
+unboundedly. The specific numbers 52K and 190× do not survive translation
+into this audit's deployed-cost frame at any point in the envelope — a
+statement about what the frame computes, not a measured-latency fact.**
 
 ## Finding 1 — SubQ's assumed config matches reality (reconstruction is exact)
 
@@ -86,6 +133,25 @@ factor anywhere.** In the cost frame κ applies per-component: all GEMMs
 (indexer scoring + projections on both sides) get the FP8 discount; only the
 BF16 softmax-attention core does not. How large κ defensibly is gets its own
 pressure test below.
+
+### The strongest rebuttal SubQ could make, and the answer
+
+§5.7 opens: *"The discussion in this section so far has been about model
+development. The remainder is about deployment"* (subq.txt:843–845). SubQ
+could therefore object that §5.6 was a model-development argument — note its
+"teacher-attention cost" framing — and that this audit re-scopes it to
+deployed serving (H800, FP8, inference kernels) before correcting it. Three
+answers. First, lever (a) is phase-independent: DeepSeek's kernel-level
+constraint ("each key-value entry must be shared across multiple queries for
+computational efficiency", dsv32.txt:79–82) binds training and prefill
+exactly as it binds serving, and Finding 3's bandwidth argument contains no
+precision or phase assumption — so the biggest correction stands inside
+SubQ's own frame. Second, the κ correction *is* deployment-specific, which
+is exactly why the envelope retains a count-frame floor where it vanishes.
+Third, §5.6's own prose reaches deployment conclusions — *"A routing
+mechanism intended to make long context affordable becomes the dominant
+long-context cost"* (subq.txt:797–799) — and an affordability claim is
+answerable in the cost frame it invokes.
 
 ## Finding 3 — SubQ counts the attention accounting DeepSeek cannot use at long context
 
@@ -176,7 +242,9 @@ row.
 ## The lever matrix (each lever isolated, then combined)
 
 Lever (a) = deployed MQA-absorbed core; lever (b) = FP8 cost frame, κ per
-component. κ=1 rows are raw FLOP counts.
+component. κ=1 rows are raw FLOP counts. Every cell is an output of the
+stated FLOP-cost frame (uniform utilization, SPoF 4), not a measured
+latency.
 
 | Case | Crossover | @128K | @1M | @12M |
 |---|---|---|---|---|
@@ -191,12 +259,16 @@ component. κ=1 rows are raw FLOP counts.
 | (a)+(b) — deployed, κ=4 (sensitivity only) | 309,648 | 0.45× | 3.3× | 38.9× |
 
 Lever (a) is 1.95× on the crossover by itself; lever (b) is 1.2–1.4× at the
-defensible κ range. Combined at κ_eff = 1.6 the crossover sits at ~143K —
-just past DeepSeek V3.2's served context window (max 128K, dsv32.txt:88–89).
-**Within the range DeepSeek actually ships, the deployed-cost indexer at most
-reaches parity with the attention it serves: 0.93× at 128K at the headline κ,
-0.97× at the κ floor.** (The earlier, κ=2-based claim "never overtakes in the
-served window" was too strong; at the κ floor it is a photo finish.)
+defensible κ range. Combined at κ_eff = 1.6 the computed crossover sits at ~143K —
+just past DeepSeek V3.2's 128K context window (V3.2 is continued-trained
+from a 128K-extended V3.1 base, dsv32.txt:88–89, and DeepSeek's own serving
+cost curves stop at 128K — Figure 3's token-position axis, dsv32.txt:266–270).
+**Under this cost frame, within the range DeepSeek actually ships, the
+indexer computes to at most parity with the attention it serves: 0.93× at
+128K at the headline κ, 0.97× at the κ floor.** (The earlier, κ=2-based
+claim "never overtakes in the served window" was too strong; at the κ floor
+it is a photo finish — and whether utilization widens or erases that margin
+is exactly what SPoF 4 leaves open.)
 
 ## Finding 4 — Table 3 prices SubQ's own selector at zero
 
@@ -212,6 +284,9 @@ not. Any nonzero SSA selector cost lowers the 191.3× further; the audited
 crossover/ratio findings above are independent of this.
 
 ## Scorecard of SubQ's modeling choices
+
+Magnitudes are within the FLOP frame; "fair"/"favors" judge the accounting,
+not measured speed.
 
 | Choice | Direction |
 |---|---|
@@ -255,39 +330,52 @@ Assumptions that individually move the headline by more than ~1.3×:
 3. **Lever (a)** — 1.95× on the crossover, but it rests on DeepSeek's own
    deployment statement plus the capacity *and* bandwidth infeasibility of
    the alternative (Finding 3); this is the best-evidenced of the three.
-4. **The FLOP frame itself is a conservative bound, not a hole.** Every number
-   in this audit assumes wall-clock time ∝ precision-weighted FLOPs at *uniform
-   hardware utilization*. Real hardware violates this — the companion benchmark
-   in this repo is the direct demonstration — and it violates it
-   *asymmetrically*: the indexer is a dense, GEMM-shaped workload that reaches
-   high tensor-core utilization, while the sparse gathered attention core is
-   memory-bound and scatter-limited and reaches lower utilization (Finding 3
-   measures its arithmetic intensity at ~236× below the bf16 ridge). So the
-   FLOP frame *flatters the sparse core relative to the indexer*, which means
-   every crossover and ratio above is an **upper bound on how favorable reality
-   is to SubQ**: real wall-clock places the crossover later and the indexer's
-   dominance share higher than the FLOP-frame estimate. This is a conservative
-   bound on the audit's own argument — the wall-clock correction runs in the
-   audit's favor, not against it.
+4. **The FLOP frame's residual model risk: cross-component utilization,
+   direction unknown.** Every number in this audit assumes wall-clock time ∝
+   precision-weighted FLOPs at *uniform hardware utilization*; real hardware
+   violates this — the companion benchmark in this repo is the direct
+   demonstration. An earlier revision claimed the violation ran in the
+   audit's favor ("every figure is an upper bound on how favorable reality
+   is to SubQ"); **that argument was internally inconsistent and is
+   withdrawn**: it characterized the indexer as a high-utilization dense
+   GEMM while §3A of the script shows it memory-bound at every modeled tile,
+   and it took the sparse core's arithmetic intensity from the non-absorbed
+   accounting this audit rejects (~1.25 FLOP/B; the deployed MQA-absorbed
+   core sits at ~242–483 FLOP/B, at or above the bf16 ridge — *before*
+   gather inefficiency, whose magnitude is not analytically knowable). The
+   honest statement: between a memory-bound scaled-FP8 GEMM (indexer) and a
+   near-ridge scattered-gather core (deployed attention), the direction of
+   the utilization correction is unknown from first principles. If it runs
+   against the indexer, the crossover moves later, helping this audit's
+   direction; if it runs against the gather core, the ≥1.9× floor could
+   plausibly erode toward ~1.5×. Only wall-clock measurement of DeepSeek's
+   kernels on Hopper resolves it — the companion benchmark's methodology is
+   the natural follow-up. A human performance-engineering review of this
+   frame is explicitly invited; the model that produced this audit
+   twice defended the withdrawn version of this argument.
 
 ## What survives, plainly
 
-- The indexer **is** O(L²) and its cost share grows without bound; by 12M
-  tokens it costs 68–161× the attention it serves under every defensible
-  corrected accounting (109× count-frame; 74–84× at defensible κ). SubQ's
-  architectural point — a quadratic selector eventually dominates a linear
-  sparse attention — is correct and conceded by DeepSeek.
+- The indexer **is** O(L²) and its share grows without bound; by 12M tokens
+  it computes to 68–161× the attention it serves under every defensible
+  corrected accounting in this frame (109× count-frame; 74–84× at defensible
+  κ). SubQ's architectural point — a quadratic selector eventually dominates
+  a linear sparse attention — is correct and conceded by DeepSeek.
 - The specific figures **52K and 190×** hold only in the raw-count frame with
-  the non-deployed attention accounting. As statements about DeepSeek's
-  shipped system cost, the supported band is **135K–156K and 74–84×** (the κ
-  range over the code-confirmed BF16-core precision split), with the
-  count-frame corner **101K / 109×** retained only as a conservative floor
-  (the FP8-core scenario DeepSeek's own reference code disfavors). The
-  illustrative midpoint is ~143K / ~80× (κ_eff = 1.6), never to be cited
-  without the envelope. No point in the full envelope — floor included — is
-  within 1.9× of SubQ's crossover or within 1.7× of SubQ's 12M ratio.
-- Caveat in SubQ's favor: FLOPs still aren't wall-clock (this repo's thesis).
-  But the direction of that gap likely helps DeepSeek here too — the indexer
-  is a dense, GEMM-friendly workload while sparse gathered attention is
-  memory-bound, so the wall-clock crossover plausibly sits later than any
-  FLOP-frame estimate above.
+  the non-deployed attention accounting. Restated in this audit's
+  deployed-cost frame — a stated lens, not a measurement of the shipped
+  system — the supported band is **135K–156K and 74–84×** (the κ range over
+  the code-confirmed BF16-core precision split), with the count-frame corner
+  **101K / 109×** retained only as a conservative floor (the FP8-core
+  scenario DeepSeek's own reference code disfavors). The illustrative
+  midpoint is ~143K / ~80× (κ_eff = 1.6), never to be cited without the
+  envelope and its frame. Given lever (a), no point in the envelope — floor
+  included — is within 1.95× of SubQ's crossover or within 1.74× of their
+  12M ratio; without lever (a), the κ-only corner overstates by just 1.24×,
+  so the robustness claim is conditional on the deployed accounting and says
+  so.
+- Caveat that cuts both ways: FLOPs still aren't wall-clock (this repo's
+  thesis). The direction of the utilization gap between the memory-bound FP8
+  indexer and the near-ridge gather core is unknown from first principles
+  (SPoF 4); wall-clock on Hopper is the only resolution, and until then the
+  envelope above is a FLOP-frame result, not a latency result.

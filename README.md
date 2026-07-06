@@ -3,10 +3,16 @@
 Independent wall-clock audit of content-dependent sparse attention.
 
 **Question under test:** SubQ-1.1-Small claims ~64× fewer attention FLOPs than
-dense attention at 1M tokens, with almost no published wall-clock numbers.
-FLOPs are not latency — sparse attention's top-k selection involves scattered
-memory access that can bottleneck a GPU regardless of op count. This repo
-measures the truth using the closest open-source equivalent:
+dense attention at 1M tokens, and its model card reports one measured
+wall-clock point: 966 ms vs 54,164 ms for FlashAttention-2 at 1M on an H100
+(~56×, parity near 16K; Figure 12). What the card does *not* disclose is the
+mechanism: the selector that decides which tokens attend is explicitly out of
+scope ("The mechanism by which SSA meets these requirements is outside the
+scope of this report", §3.1). FLOPs are not latency — in every *disclosed*
+content-dependent sparse mechanism, selection carries scattered memory access
+and its own compute that can dominate a GPU regardless of op count. This repo
+measures what the closest open-source equivalent actually delivers, to locate
+the burden of proof:
 
 - **Sparse:** [fla-org/native-sparse-attention](https://github.com/fla-org/native-sparse-attention)
   (NSA, Triton kernels) — the full `NativeSparseAttention` layer: compression
@@ -18,6 +24,40 @@ measures the truth using the closest open-source equivalent:
 We measure **wall-clock latency, tokens/sec, and peak GPU memory — never
 FLOPs.** Forward-only is the primary result (the claim is about inference);
 forward+backward is secondary (training cost).
+
+## What this does and does not establish
+
+- The benchmark measures **NSA, an open proxy — not SubQ's SSA**, whose
+  mechanism is undisclosed (§3.1). Its conclusions are about the closest
+  open analog and where the burden of proof sits, not about SubQ's system,
+  which no one outside SubQ can run or observe.
+- The companion analysis (`analysis/AUDIT.md`) is a **FLOP-frame
+  reconstruction, not a measurement**: its crossovers and ratios are values
+  computed under a stated cost frame whose hardware-utilization assumption
+  is unverified in either direction (its SPoF 4), and it is flagged for
+  expert performance-engineering review.
+- **No claim in this repo has been checked by a human domain expert or by
+  SubQ.** It is independent analysis at the evidence level stated inline.
+
+## What this shows (headline reading — see caveats 5–6 before citing)
+
+The closest open analog delivers **7.14× at 1M tokens** — but ~90% of its
+runtime is top-k selection + compression attention, machinery that is
+quadratic by construction and that SubQ claims SSA does not need (its
+"selection, retrieval, and attention steps are each linear in sequence
+length", subq.txt:391–393). Subtracting those buckets from our own
+measurement — i.e., pricing selection at zero cost — leaves ~370 ms →
+**~69× over the same dense baseline**, so a genuinely cheap non-quadratic
+selector would make a 56×-class result unsurprising. SubQ's published 56×
+therefore *holds only if* their undisclosed selector is genuinely
+non-quadratic as claimed — and no public artifact demonstrates one. **This
+benchmark is not a debunk of the 56×; it is a precise statement of what
+SubQ must demonstrate** — a content-dependent selector that is not
+quadratic — because no disclosed mechanism, open kernel, or released
+artifact currently exhibits one. The shared thesis with the analytical audit in `analysis/` is symmetric:
+counting ops is not costing systems, and the error runs in both directions —
+against SubQ's 64×-FLOP framing here, and against SubQ's own 190× FLOP-count
+indictment of DeepSeek's indexer there.
 
 ## Quick start (on the GPU pod)
 
@@ -91,7 +131,9 @@ assumption, and as of 2026-07 neither can anyone outside DeepSeek:
    models, useless for long-context retrieval.
 3. **Even that one test would answer a different question**: training-free
    drop-in sparsification of a dense-trained model — which the NSA paper
-   itself predicts degrades (native trainability is its stated motivation),
+   itself argues against (post-hoc sparsity "forces models to deviate from
+   their pretrained optimization trajectory", §2.2; native trainability is
+   its stated motivation),
    and which requires hand-setting NSA's gates (the dense checkpoint has no
    gate weights). Parity would be a strong positive finding about drop-in
    use; degradation would say nothing about NSA-as-trained. Neither outcome
@@ -146,16 +188,35 @@ quadratic memory.
    reads) and is out of scope.
 5. **NSA ≠ SubQ.** NSA is the closest open implementation of
    content-dependent block-sparse attention, not SubQ's exact mechanism.
-   Results bound the plausibility of the claim; they don't reproduce it.
+   Results locate the burden of proof; they do **not** bound SubQ's system,
+   because the dominant measured cost (quadratic selection, ~90% of NSA's
+   runtime at 1M) is precisely the component SubQ claims to have replaced
+   with a linear one (subq.txt:391–393). The "closest open analog" framing
+   is legitimate only in the negative direction: no public mechanism
+   achieves content-dependent selection in linear time, and SubQ's is
+   undisclosed (§3.1).
+6. **Speedup magnitude vs the NSA paper.** The NSA paper reports ~9× forward
+   at 64K on its own (unreleased) kernels with dk=192/dv=128 against a
+   Triton-implemented FA2 baseline; this harness measures 2.95× at 64K. Two
+   known reasons: our dense baseline is the official CUDA flash-attn build
+   (stronger than a Triton baseline), and the fla-org kernel constrains this
+   config to head_dim 64. We disclose the gap rather than tune toward either
+   number; the comparison this repo stands on is same-harness NSA-vs-dense,
+   not cross-paper absolutes.
 
 ## Companion analytical audit (no GPU)
 
 `analysis/dsa_flop_audit.py` audits SubQ §5.6's claim that DeepSeek V3.2's
 Lightning Indexer overtakes its sparse main attention at ~52K tokens (190× at
-12M). It reconstructs SubQ's Table 2 exactly, then re-derives the crossover
-with two accounting levers isolated: deployed MQA-absorbed MLA vs SubQ's
-non-absorbed accounting, and FP8-cost vs raw FLOP count. Findings in
-`analysis/AUDIT.md`; sources in `papers/`.
+12M). It reconstructs SubQ's Table 2 exactly, then recomputes the crossover
+under a stated FLOP-cost frame — uniform hardware utilization, an assumption
+the audit flags as unverified in either direction — with two accounting
+levers isolated: deployed MQA-absorbed MLA vs SubQ's non-absorbed
+accounting, and FP8-cost vs raw FLOP count. Its results are what that frame
+computes, not measured latencies; this repo's own empirical finding
+(quadratic selection eats sparse-attention gains) in fact *supports* §5.6's
+qualitative thesis even as the analytical audit corrects its constants.
+Findings in `analysis/AUDIT.md`; sources in `papers/`.
 
 ## Repo layout
 
